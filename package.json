@@ -1,0 +1,44 @@
+{
+  "name": "qapp",
+  "version": "0.1.0",
+
+  "description": "Lightweight application framework with dependency management.",
+  "keywords": [
+    "app",
+    "application",
+    "dependency",
+    "framework",
+    "injection",
+    "management",
+    "modular",
+    "module"
+  ],
+
+  "homepage": "https://github.com/jshq/qapp",
+  "bugs": {
+    "url": "https://github.com/jshq/qapp/issues"
+  },
+
+  "contributors": [{
+    "name": "Petr Kobalicek",
+    "email": "kobalicek.petr@gmail.com",
+    "url": "http://kobalicek.com"
+  }],
+
+  "license": "Unlicense",
+
+  "main": "qapp.js",
+
+  "devDependencies": {
+    "mocha": "*"
+  },
+
+  "repository" : {
+    "type": "git",
+    "url": "https://github.com/jshq/qapp.git"
+  },
+
+  "scripts": {
+    "test": "mocha qapp-spec.js"
+  }
+}
