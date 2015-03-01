@@ -1,7 +1,18 @@
 "use strict";
 
 var assert = require("assert");
+var util = require("util");
+
 var qapp = require("./qapp");
+
+var ConsoleLogger = {
+  log: function(level, msg /*, ... */) {
+    var s = "[" + level + "] " +
+        util.format.apply(null, Array.prototype.slice.call(arguments, 1));
+    console.log(s);
+  }
+};
+qapp.ConsoleLogger = ConsoleLogger;
 
 var Counter = {
   name: "counter",
@@ -70,7 +81,7 @@ var C_NoDeps_PriorityPlusOne = {
 
 describe("QApp", function() {
   it("should resolve dependencies of 'a' and 'b'", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["a", "b"], function(err) {
         assert.ifError(err);
@@ -81,7 +92,7 @@ describe("QApp", function() {
   });
 
   it("should resolve dependencies of 'b' and 'a'", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, B_DepsOnA, A_NoDeps])
       .start(["b", "a"], function(err) {
         assert.ifError(err);
@@ -92,7 +103,7 @@ describe("QApp", function() {
   });
 
   it("should initialize only 'a'", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["a"], function(err) {
         assert.ifError(err);
@@ -103,7 +114,7 @@ describe("QApp", function() {
   });
 
   it("should initialize only 'b'", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["b"], function(err) {
         assert.ifError(err);
@@ -114,7 +125,7 @@ describe("QApp", function() {
   });
 
   it("should initialize all '*'", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -125,7 +136,7 @@ describe("QApp", function() {
   });
 
   it("should initialize only 'b' (with 'a' as a dependency)", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["b"], function(err) {
         assert.ifError(err);
@@ -136,7 +147,7 @@ describe("QApp", function() {
   });
 
   it("should fail to initialize modules depending on each other", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_DepsOnB, B_DepsOnA])
       .start(["*"], function(err) {
         assert(err);
@@ -147,7 +158,7 @@ describe("QApp", function() {
   });
 
   it("should fail to initialize modules having unknwon dependency", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([A_NoDeps, B_NoDeps])
       .start(["*"], function(err) {
         assert(err);
@@ -159,7 +170,7 @@ describe("QApp", function() {
 
 
   it("should fail to initialize an unknown module", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["unknown"], function(err) {
         assert(err);
@@ -170,7 +181,7 @@ describe("QApp", function() {
   });
 
   it("should resolve correct order if module has a priority (-1)", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, C_NoDeps_PriorityMinusOne])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -181,7 +192,7 @@ describe("QApp", function() {
   });
 
   it("should resolve correct order if module has a priority (+1)", function(done) {
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, C_NoDeps_PriorityPlusOne])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -200,7 +211,7 @@ describe("QApp", function() {
       }
     };
 
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Throw])
       .start(["throw"], function(err) {
         assert(err);
@@ -236,7 +247,7 @@ describe("QApp", function() {
       }
     };
 
-    var app = qapp()
+    var app = qapp({ logger: ConsoleLogger })
       .register([Counter, CustomA, CustomB])
       .start(["*"], function(err) {
         assert.ifError(err);

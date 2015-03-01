@@ -38,6 +38,12 @@ function merge(dst, src) {
 // [BufferedLogger]
 // ============================================================================
 
+var LogSilly = ["silly"];
+var LogDebug = ["debug"];
+var LogInfo = ["info"];
+var LogWarn = ["warn"];
+var LogError = ["error"];
+
 // Logger that is initialized if no default logger is provided. It buffers all
 // logs and once a real logger is plugged in all messages can be send to it.
 function BufferedLogger() {
@@ -49,23 +55,23 @@ merge(BufferedLogger.prototype, {
   },
 
   silly: function() {
-    this._logs.push(["silly"].concat(slice.call(arguments, 0)));
+    this._logs.push(LogSilly.concat(slice.call(arguments, 0)));
   },
 
   debug: function() {
-    this._logs.push(["debug"].concat(slice.call(arguments, 0)));
+    this._logs.push(LogDebug.concat(slice.call(arguments, 0)));
   },
 
   info: function() {
-    this._logs.push(["info"].concat(slice.call(arguments, 0)));
+    this._logs.push(LogInfo.concat(slice.call(arguments, 0)));
   },
 
   warn: function() {
-    this._logs.push(["warn"].concat(slice.call(arguments, 0)));
+    this._logs.push(LogWarn.concat(slice.call(arguments, 0)));
   },
 
   error: function() {
-    this._logs.push(["error"].concat(slice.call(arguments, 0)));
+    this._logs.push(LogError.concat(slice.call(arguments, 0)));
   }
 });
 
@@ -261,7 +267,7 @@ function App(opt) {
 
   // Application internals [PRIVATE].
   this._internal = {
-    status     : kPending, // Application status.
+    state      : kPending, // Application's state.
     registered : {},       // Modules registered.
     running    : {},       // Modules running.
     initIndex  : -1,       // Module initialization index.
@@ -291,45 +297,45 @@ merge(App.prototype, {
   silly: function(msg /*[, ...]*/) {
     var logger = this.logger;
     if (arguments.length === 1)
-      logger.silly(msg);
+      logger.log("silly", msg);
     else
-      logger.silly.apply(logger, arguments);
+      logger.log.apply(LogSilly.concat(slice.call(arguments)));
     return this;
   },
 
   debug: function(msg /*[, ...]*/) {
     var logger = this.logger;
     if (arguments.length === 1)
-      logger.debug(msg);
+      logger.log("debug", msg);
     else
-      logger.debug.apply(logger, arguments);
+      logger.log.apply(LogDebug.concat(slice.call(arguments)));
     return this;
   },
 
   info: function(msg /*[, ...]*/) {
     var logger = this.logger;
     if (arguments.length === 1)
-      logger.info(msg);
+      logger.log("info", msg);
     else
-      logger.info.apply(logger, arguments);
+      logger.log.apply(LogInfo.concat(slice.call(arguments)));
     return this;
   },
 
   warn: function(msg /*[, ...]*/) {
     var logger = this.logger;
     if (arguments.length === 1)
-      logger.warn(msg);
+      logger.log("warn", msg);
     else
-      logger.warn.apply(logger, arguments);
+      logger.log.apply(LogWarn.concat(slice.call(arguments)));
     return this;
   },
 
   error: function(msg /*[, ...]*/) {
     var logger = this.logger;
     if (arguments.length === 1)
-      logger.error(msg);
+      logger.log("error", msg);
     else
-      logger.error.apply(logger, arguments);
+      logger.log.apply(LogError.concat(slice.call(arguments)));
     return this;
   },
 
@@ -431,22 +437,22 @@ merge(App.prototype, {
   // [Lifetime Interface]
   // --------------------------------------------------------------------------
 
-  getStatus: function() {
-    return this._internal.status;
+  getState: function() {
+    return this._internal.state;
   },
 
   // \function `App.isRunning()`
   //
   // Get whether the application is started (i.e. all modules started).
   isRunning: function() {
-    return this._internal.status === kRunning;
+    return this._internal.state === kRunning;
   },
 
   // \function `App.isStopped()`
   //
   // Get whether the application is stopped (i.e. all modules stopped).
   isStopped: function() {
-    return this._internal.status === kStopped;
+    return this._internal.state === kStopped;
   },
 
   // \function `App.start(required, cb)`
@@ -456,7 +462,7 @@ merge(App.prototype, {
     var self = this;
     var internal = this._internal;
 
-    if (internal.status !== kPending) {
+    if (internal.state !== kPending) {
       var msg = "Attempt to start app multiple times.";
 
       self.log("error", "[APP] " + msg);
@@ -464,13 +470,13 @@ merge(App.prototype, {
     }
 
     self.log("silly", "[APP] Starting.");
-    internal.status = kStarting;
+    internal.state = kStarting;
 
     var order = resolveDependencies(internal.registered, required);
     var module = null;
 
     if (order instanceof Error) {
-      internal.status = kFailed;
+      internal.state = kFailed;
       callAsync(cb, order);
 
       return this;
@@ -486,7 +492,7 @@ merge(App.prototype, {
       if (err) {
         self.log("error", "[APP] Module '" + module.name + "' failed to start: " + err.message);
 
-        internal.status = kFailed;
+        internal.state = kFailed;
         return callAsync(cb, err);
       }
 
@@ -501,7 +507,7 @@ merge(App.prototype, {
         if (index >= order.length) {
           self.log("silly", "[APP] Running.");
 
-          internal.status = kRunning;
+          internal.state = kRunning;
           return callAsync(cb, null);
         }
 
@@ -513,7 +519,7 @@ merge(App.prototype, {
         } catch (ex) {
           self.log("error", "[APP] Module '" + module.name + "' failed to start (thrown): " + ex.message);
 
-          internal.status = kFailed;
+          internal.state = kFailed;
           return callAsync(cb, ex);
         }
 
@@ -533,8 +539,8 @@ merge(App.prototype, {
     var self = this;
     var internal = this._internal;
 
-    if (internal.status !== kRunning) {
-      var msg = internal.status < kRunning
+    if (internal.state !== kRunning) {
+      var msg = internal.state < kRunning
         ? "Attempt to stop a non-running app."
         : "Attempt to stop app multiple times.";
 
@@ -543,7 +549,7 @@ merge(App.prototype, {
     }
 
     self.log("silly", "[APP] Stopping.");
-    internal.status = kStopping;
+    internal.state = kStopping;
 
     var order = internal.initOrder;
     var module = null;
@@ -555,7 +561,7 @@ merge(App.prototype, {
       if (err) {
         self.log("error", "[APP] Module '" + module.name + "' failed to stop: " + err.message);
 
-        internal.status = kFailed;
+        internal.state = kFailed;
         return callAsync(cb, err);
       }
 
@@ -570,7 +576,7 @@ merge(App.prototype, {
         if (index === -1) {
           self.log("silly", "[APP] Stopped.");
 
-          internal.status = kStopped;
+          internal.state = kStopped;
           return callAsync(cb, null);
         }
 
@@ -583,7 +589,7 @@ merge(App.prototype, {
           } catch (ex) {
             self.log("error", "[APP] Module '" + module.name + "' failed to stop (thrown): " + ex.message);
 
-            internal.status = kFailed;
+            internal.state = kFailed;
             return callAsync(cb, ex);
           }
 
