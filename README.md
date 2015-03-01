@@ -152,21 +152,34 @@ var ConsoleLogger = {
   }
 };
 
+// Define a ModuleA. This object conforms to a signature expected by `qapp`.
 var ModuleA = {
   name: "a",
   deps: [],
 
   start: function(app, next) {
     app.info(app.config.a.msg + " (start)");
+
+    // Modules can associate their own data with app. This is the way the app
+    // object is used. The `ModuleA` itself is available as `this`. However,
+    // modules shouldn't write to `this` as it's considered a global object.
+    app.a = {};
+
     next();
   },
 
   stop: function(app, next) {
     app.info(app.config.a.msg + " (stop)");
+
+    // If your application architecture is 100% clean then removing the module's
+    // data shouldn't cause any harm.
+    app.a = null;
+
     next();
   }
 };
 
+// Define a ModuleB which depends on ModuleA.
 var ModuleB = {
   name: "b",
   deps: ["a"],
@@ -174,6 +187,10 @@ var ModuleB = {
   start: function(app, next) {
     // Started after `a`.
     app.info(app.config.b.msg + " (start)");
+
+    // Since `b` is started after `a` it can use its data.
+    app.a.b = {};
+
     next();
   },
 
@@ -184,6 +201,7 @@ var ModuleB = {
   }
 };
 
+// Application's entry point.
 function main() {
   var app = qapp({
     logger: ConsoleLogger,
@@ -236,4 +254,179 @@ The example logs the following when run:
 [silly] [APP] Module 'a' stopping.
 [info] Module 'a' is good (stop)
 [silly] [APP] Stopped.
+```
+
+
+Tips - Module as a Class
+------------------------
+
+In the example above two modules were created, but they didn't do anything useful. Modules themselves are considered immutable and `start()` and `stop()` handlers shouldn't write anything to them, only the `app` object should be used to access data that is mutable. However, you don't want to start doing this in `start()` and `stop()` handlers, it's better to use more object oriented approach to instantiate your own classes that you associate with the `app` object.
+
+The example below is consisting of two files:
+
+```JS
+// ---------------------------------------------------------------------------
+// FILE: module.js
+// ---------------------------------------------------------------------------
+
+// We use `qclass` to create a JS classes. It's much shorter than dealing
+// with `Function.prototype` here.
+var qclass = require("qclass");
+
+// A module class - object oriented way of creating your own modules. QApp
+// doesn't dictate how to do such class, the only important thing to do is
+// to backlink the `app` object in the module itself, so the module can
+// access the `app` at any time.
+var Module = qclass({
+  $construct: function(app) {
+    // Backlink the `app` within the module.
+    this.app = app;
+
+    // Some members...
+    this.started = false;
+  },
+
+  // Your start handler.
+  start: function(next) {
+    // You can access `this`.
+    this.started = true;
+    this.app.silly("[MOD] Module.start() - called");
+
+    next();
+  },
+
+  // Your stop handler.
+  stop: function(next) {
+    // You can access `this`.
+    this.started = false;
+    this.app.silly("[MOD] Module.stop() - called");
+
+    next();
+  }
+  
+  // Any other members...?
+});
+
+// Export the signature of the module so it can be simply `require()`d.
+module.exports = {
+  name: "module",
+  deps: [],
+  
+  start: function(app, next) {
+    app.module = new Module(app);
+    app.module.start(next);
+  },
+
+  stop: function(app, next) {
+    app.module.stop(next)
+  }
+};
+
+// ---------------------------------------------------------------------------
+// FILE main.js
+// ---------------------------------------------------------------------------
+
+var qapp = require("qapp");
+var util = require("util");
+
+// A console logger.
+var ConsoleLogger = {
+  log: function(level, msg /*, ... */) {
+    var s = "[" + level + "] " +
+        util.format.apply(null, Array.prototype.slice.call(arguments, 1));
+    console.log(s);
+  }
+};
+
+function main() {
+  var app = qapp({
+    logger: ConsoleLogger,
+    config: {}
+  });
+
+  // Register modules. QApp doesn't dictate where to look for a modules to be
+  // registered. This is just an example. You can use something like `index.js`
+  // to load and return all modules in a directory, etc...
+  app.register([
+    require("./module")
+  ]);
+
+  // Start the app.
+  app.start(["*"], function(err) {
+    // ... your on-start code ...
+
+    app.stop(function(err) {
+      // ... your on-stop code ...
+    });
+  });
+}
+
+main();
+
+```
+
+Firstly, we created a module in a file `module.js` that is imported from `main.js`. The module itself exports its signature in `module.exports`, which is basically just a wrapper around the `Module` class. The `app` object is stored within the module instance so it can be used later on. The application registers the module by `app.register()` and then the module is started automatically as we passed `["*"]` into the `app.start()`.
+
+
+Tips - Using Priority to Bootstrap / Migrate
+--------------------------------------------
+
+Bootstrapping is a very challenging task. How to do it without quirks in your application? Well, you can do it with `qapp` by taking advantage of module priorities. Let's consider that we have the following modules:
+
+  * `db` - This is a module responsible for establishing a DB connection in `start()` handler and closing it in `stop()` handler.
+  * `bo` - This is your business object that is using `db` in some way. It expects your database to be working and already bootstrapped.
+
+It's obvious that `bo` depends on `db`. When the application is started it will first start `db` and then `bo`. Priority can be used to put something in the middle in case it's necessary. The following code should demonstrate how this will work:
+
+```JS
+var qapp = require("qapp");
+var util = require("util");
+
+// Bootstrap module.
+var BootstrapModule = {
+  name: "bootstrap",
+
+  deps: ["db"],
+  priority: -1,
+
+  // Bootstrap needs just `start()` handler
+  start: function(app, next) {
+    app.silly("Wiping out your DB!");
+
+    // ... your bootstrap code ...
+
+    next();
+  }
+};
+
+function main(argv) {
+  var app = qapp({
+    logger: ConsoleLogger,
+    config: {}
+  });
+
+  // Register modules. Again, QApp doesn't dictate where to look for a modules
+  // to be registered. This is just an example. You can use something like
+  // `index.js` to load and return all modules in a directory, etc...
+  app.register([
+    DBModule, // Has to be provided by you!
+    BOModule  // Has to be provided by you!
+  ]);
+
+  // If the application has been started with "--bootstrap", insert the module.
+  if (argv.indexOf("--bootstrap") !== -1)
+    app.register(BootstrapModule)
+
+  // Passing "*" guarantees bootstrap to be called - after "db" and before "bo".
+  app.start(["*"], function(err) {
+    // ... your on-start code ...
+
+    app.stop(function(err) {
+      // ... your on-stop code ...
+    });
+  });
+}
+
+main(process.argv);
+
 ```
