@@ -263,4 +263,39 @@ describe("QApp", function() {
         });
       });
   });
+
+  it("should call afterStart and afterStop handlers", function(done) {
+    var Module = {
+      name: "module",
+      deps: [],
+      start: function(app, next) {
+        app.addHandler("afterStart", function(app) {
+          assert.strictEqual(this, app);
+          app.afterStartCalled = true;
+        }, app /* check handler is called with correct `thisArg` if passed */);
+        next(null);
+      },
+      stop: function(app, next) {
+        app.addHandler("afterStop", function(app) {
+          assert.strictEqual(this, app);
+          app.afterStopCalled = true;
+        }, app /* check handler is called with correct `thisArg` if passed  */);
+        next(null);
+      }
+    };
+
+    var app = qapp({ logger: ConsoleLogger })
+      .register([Module])
+      .start(["*"], function(err) {
+        assert.ifError(err);
+        assert.strictEqual(app.afterStartCalled, true);
+
+        app.stop(function(err) {
+          assert.ifError(err);
+          assert.strictEqual(app.afterStopCalled, true);
+
+          done();
+        });
+      });
+  });
 });

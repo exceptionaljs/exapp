@@ -38,42 +38,14 @@ function merge(dst, src) {
 // [BufferedLogger]
 // ============================================================================
 
-var LogSilly = ["silly"];
-var LogDebug = ["debug"];
-var LogInfo = ["info"];
-var LogWarn = ["warn"];
-var LogError = ["error"];
-
 // Logger that is initialized if no default logger is provided. It buffers all
 // logs and once a real logger is plugged in all messages can be send to it.
 function BufferedLogger() {
   this._logs = [];
 }
-merge(BufferedLogger.prototype, {
-  log: function() {
-    this._logs.push(slice.call(arguments, 0));
-  },
-
-  silly: function() {
-    this._logs.push(LogSilly.concat(slice.call(arguments, 0)));
-  },
-
-  debug: function() {
-    this._logs.push(LogDebug.concat(slice.call(arguments, 0)));
-  },
-
-  info: function() {
-    this._logs.push(LogInfo.concat(slice.call(arguments, 0)));
-  },
-
-  warn: function() {
-    this._logs.push(LogWarn.concat(slice.call(arguments, 0)));
-  },
-
-  error: function() {
-    this._logs.push(LogError.concat(slice.call(arguments, 0)));
-  }
-});
+BufferedLogger.prototype.log = function(/* level, msg, ... */) {
+  this._logs.push(slice.call(arguments, 0));
+};
 
 // ============================================================================
 // [Helpers]
@@ -243,8 +215,41 @@ function makeCallback(app, type, module, next) {
   };
 }
 
+function makeLogFunc(level) {
+  return function(msg /*[, ...]*/) {
+    var logger = this.logger;
+    var argLen = arguments.length;
+
+    if (argLen <= 1) {
+      logger.log(level, msg);
+      return this;
+    }
+
+    var args = [level, msg];
+    for (var i = 1; i < argLen; i++) {
+      args.push(arguments[i]);
+    }
+
+    logger.log.apply(args);
+    return this;
+  };
+}
+
 function callAsync(fn, err) {
   setImmediate(fn, err);
+}
+
+function callHandlers(app, action) {
+  var handlers = app._internal.handlers;
+  var list = handlers[action];
+
+  // Prevents from adding new handlers for this action.
+  handlers[action] = null;
+
+  for (var i = 0, len = list.length; i < len; i++) {
+    var handler = list[i];
+    handler.func.call(handler.thisArg, app);
+  }
 }
 
 // ============================================================================
@@ -267,11 +272,15 @@ function App(opt) {
 
   // Application internals [PRIVATE].
   this._internal = {
-    state      : kPending, // Application's state.
-    registered : {},       // Modules registered.
-    running    : {},       // Modules running.
-    initIndex  : -1,       // Module initialization index.
-    initOrder  : null      // Module initialization order.
+    state       : kPending, // Application's state.
+    registered  : {},       // Modules registered.
+    running     : {},       // Modules running.
+    initIndex   : -1,       // Module initialization index.
+    initOrder   : null,     // Module initialization order.
+    handlers: {
+      afterStart: [],       // Handlers called after successful start.
+      afterStop : []        // Handlers called after successful stop.
+    }
   };
 
   // Setup logger, bail to BufferedLogger if there is no logger in `opt`.
@@ -294,50 +303,11 @@ merge(App.prototype, {
     return this;
   },
 
-  silly: function(msg /*[, ...]*/) {
-    var logger = this.logger;
-    if (arguments.length === 1)
-      logger.log("silly", msg);
-    else
-      logger.log.apply(LogSilly.concat(slice.call(arguments)));
-    return this;
-  },
-
-  debug: function(msg /*[, ...]*/) {
-    var logger = this.logger;
-    if (arguments.length === 1)
-      logger.log("debug", msg);
-    else
-      logger.log.apply(LogDebug.concat(slice.call(arguments)));
-    return this;
-  },
-
-  info: function(msg /*[, ...]*/) {
-    var logger = this.logger;
-    if (arguments.length === 1)
-      logger.log("info", msg);
-    else
-      logger.log.apply(LogInfo.concat(slice.call(arguments)));
-    return this;
-  },
-
-  warn: function(msg /*[, ...]*/) {
-    var logger = this.logger;
-    if (arguments.length === 1)
-      logger.log("warn", msg);
-    else
-      logger.log.apply(LogWarn.concat(slice.call(arguments)));
-    return this;
-  },
-
-  error: function(msg /*[, ...]*/) {
-    var logger = this.logger;
-    if (arguments.length === 1)
-      logger.log("error", msg);
-    else
-      logger.log.apply(LogError.concat(slice.call(arguments)));
-    return this;
-  },
+  silly: makeLogFunc("silly"),
+  debug: makeLogFunc("debug"),
+  info : makeLogFunc("info"),
+  warn : makeLogFunc("warn"),
+  error: makeLogFunc("error"),
 
   switchToBufferedLogger: function() {
     this.logger = new BufferedLogger();
@@ -506,9 +476,12 @@ merge(App.prototype, {
 
         if (index >= order.length) {
           self.log("silly", "[APP] Running.");
-
           internal.state = kRunning;
-          return callAsync(cb, null);
+
+          callAsync(cb, null);
+          callHandlers(self, "afterStart");
+
+          return;
         }
 
         module = internal.registered[order[index]];
@@ -520,7 +493,9 @@ merge(App.prototype, {
           self.log("error", "[APP] Module '" + module.name + "' failed to start (thrown): " + ex.message);
 
           internal.state = kFailed;
-          return callAsync(cb, ex);
+          callAsync(cb, ex);
+
+          return;
         }
 
         if (++syncOk !== 1)
@@ -575,9 +550,12 @@ merge(App.prototype, {
 
         if (index === -1) {
           self.log("silly", "[APP] Stopped.");
-
           internal.state = kStopped;
-          return callAsync(cb, null);
+
+          callAsync(cb, null);
+          callHandlers(self, "afterStop");
+
+          return;
         }
 
         module = internal.registered[order[index]];
@@ -600,6 +578,29 @@ merge(App.prototype, {
     }
 
     iterate(null);
+    return this;
+  },
+
+  // --------------------------------------------------------------------------
+  // [Handlers]
+  // --------------------------------------------------------------------------
+
+  // Add a handler that will be fired once after some `action` happened. The
+  // following handlers are available:
+  //
+  //   - "afterStart" - Called after successful application's start.
+  //   - "afterStop"  - Called after successful application's stop.
+  addHandler: function(action, func, thisArg) {
+    var handlers = this._internal.handlers;
+
+    if (!hasOwn.call(handlers, action))
+      throw new Error("Action '" + action + "' doesn't exist.");
+
+    var list = handlers[action];
+    if (list === null)
+      throw new Error("Action '" + action + "' has already fired.")
+
+    list.push({ func: func, thisArg: thisArg || null });
     return this;
   }
 });
