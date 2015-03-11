@@ -230,7 +230,7 @@ function makeLogFunc(level) {
       args.push(arguments[i]);
     }
 
-    logger.log.apply(args);
+    logger.log.apply(logger, args);
     return this;
   };
 }
