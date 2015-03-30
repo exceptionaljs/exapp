@@ -253,6 +253,71 @@ function callHandlers(app, action) {
 }
 
 // ============================================================================
+// [Utilities]
+// ============================================================================
+
+// Parse application's arguments from argv[] to an object.
+function parseArguments(argv, start) {
+  var reOne = /^-(\w+)$/;
+  var reTwo = /^--([^-][\w-]*)(=.*)?$/;
+
+  var obj = {};
+  var prevKey = "--";
+
+  var m, k, v;
+
+  // Default is to start processing from the third parameter.
+  if (start == null)
+    start = 2;
+
+  for (var i = start; i < argv.length; i++) {
+    v = argv[i];
+
+    m = v.match(reOne);
+    if (m) {
+      v = m[1];
+      for (var j = 0; j < v.length; j++)
+        obj["-" + v[j]] = "true";
+      continue;
+    }
+
+    m = v.match(reTwo);
+    if (m) {
+      k = m[1];
+      v = m[2] ? m[2].substring(1) : true;
+    }
+    else {
+      k = prevKey;
+    }
+
+    if (hasOwn.call(obj, k) && obj[k] !== true) {
+      var prev = obj[k];
+
+      if (v === true)
+        continue;
+
+      if (isArray(prev))
+        prev.push(v);
+      else
+        obj[k] = [prev, v];
+    }
+    else {
+      obj[k] = v;
+    }
+
+    prevKey = k;
+  }
+
+  for (k in obj) {
+    if (obj[k] === true)
+      obj[k] = "true";
+  }
+
+  return obj;
+}
+qapp.parseArguments = parseArguments;
+
+// ============================================================================
 // [App]
 // ============================================================================
 
@@ -337,27 +402,26 @@ merge(App.prototype, {
   //
   // If a module is registered it doesn't mean it has to run, it means that it's
   // available to be instantiated. Modules to be run are passed in `App.start()`.
-  register: function(m) {
+  register: function(m, path) {
     if (isArray(m)) {
       var modules = m;
-      for (var i = 0, len = modules.length; i < len; i++) {
-        m = modules[i];
-        if (!checkModule(m))
-          throw new TypeError("Invalid signature of a module[" + i + "] " + printModule(m) + ".");
-        this._register(m);
-      }
-    }
-    else {
-      if (!checkModule(m))
-        throw new TypeError("Invalid signature of module " + printModule(m) + ".");
-      this._register(m);
+      path = path || "";
+
+      for (var i = 0, len = modules.length; i < len; i++)
+        this.register(modules[i], path + "[" + String(i) + "]");
+
+      return this;
     }
 
+    this._register(m, path || "<root>");
     return this;
   },
 
   // \internal
-  _register: function(m) {
+  _register: function(m, path) {
+    if (!checkModule(m))
+      throw new TypeError("Invalid signature of a module '" + path + "' " + printModule(m) + ".");
+
     this._internal.registered[m.name] = m;
   },
 

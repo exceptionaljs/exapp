@@ -1,6 +1,6 @@
 {
   "name": "qapp",
-  "version": "0.1.2",
+  "version": "0.1.4",
 
   "description": "Lightweight application framework with dependency management.",
   "keywords": [

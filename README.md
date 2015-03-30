@@ -18,7 +18,7 @@ QApp contains only one class that can be extended by you or just used as is. The
 
 The `qapp.App` constructor accepts an optional `opt` argument, which can be an object having the following properties:
 
-  * `args` - Application arguments object/array. Not used directly by `qapp`, it's an arguments object that can be used by modules.
+  * `args` - Application arguments object. Not used directly by `qapp`, it's an arguments object that can be used by modules. QApp contains arguments parser that is able to convert an array of arguments into a dictionary and it's available through `qapp.parseArguments()`. However, the functionality is limited. If you need a more robust arguments parsing please consider some other third party modules.
   * `config` - Application configuration object. Not used directly by `qapp`, it's a configuration that can be used by modules.
   * `logger` - An object that provides a `log(level, msg, ...)` function. If you use `winston` for logging you can just pass its instance, otherwise `qapp` will buffer all logs until you provide a logger that is compatible with the interface described (one of your modules can provide a logger).
   * `modules` - Application modules to register, passed to `App.register()`.
@@ -255,6 +255,14 @@ The example logs the following when run:
 [info] Module 'a' is good (stop)
 [silly] [APP] Stopped.
 ```
+
+
+QApp Utility Functions
+----------------------
+
+The following utility functions are exported by `qapp`:
+
+  - `qapp.parseArguments(argv, start = 2)` - Parse an application's arguments from `argv` into a dictionary. For example the following array `["node", "app.js", "--key=value"]` would be parsed to `{ key: "value" }`.
 
 
 Tips - Module as a Class

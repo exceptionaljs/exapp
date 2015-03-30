@@ -80,6 +80,46 @@ var C_NoDeps_PriorityPlusOne = {
 };
 
 describe("QApp", function() {
+  it("should test parseArguments()", function() {
+    function check(argv, map) {
+      assert.deepEqual(qapp.parseArguments(argv, 0), map);
+      assert.deepEqual(qapp.parseArguments(["node", "app.js"].concat(argv)), map);
+    }
+
+    check([                             ], {                                 });
+
+    check(["-a"                         ], { "-a": "true"                    });
+    check(["-a", "-a"                   ], { "-a": "true"                    });
+    check(["-a", "-b"                   ], { "-a": "true", "-b": "true"      });
+
+    check(["-ab"                        ], { "-a": "true", "-b": "true"      });
+    check(["-ab", "-a"                  ], { "-a": "true", "-b": "true"      });
+    check(["-ab", "-b"                  ], { "-a": "true", "-b": "true"      });
+    check(["-ab", "-a", "-b"            ], { "-a": "true", "-b": "true"      });
+
+    check(["--a"                        ], { a: "true"                       });
+    check(["--a", "--a"                 ], { a: "true"                       });
+    check(["--a", "--a", "--a"          ], { a: "true"                       });
+
+    check(["--a", "--b"                 ], { a: "true", b: "true"            });
+    check(["--a", "--b", "--c"          ], { a: "true", b: "true", c: "true" });
+
+    check(["--a="                       ], { a: ""                           });
+    check(["--a=123456"                 ], { a: "123456"                     });
+    check(["--a=string"                 ], { a: "string"                     });
+    check(["--a=a", "--a=b"             ], { a: ["a", "b"]                   });
+    check(["--a=a", "--a=b", "--a=c"    ], { a: ["a", "b", "c"]              });
+    check(["--a=", "--a=a"              ], { a: ["", "a"]                    });
+    check(["--a=a", "--a="              ], { a: ["a", ""]                    });
+    check(["--hasOwnProperty=a"         ], { hasOwnProperty: "a"             });
+
+    check(["--a", "123456"              ], { a: "123456"                     });
+    check(["--a", "string"              ], { a: "string"                     });
+    check(["--a", "a", "--a", "b"       ], { a: ["a", "b"]                   });
+    check(["--a", "a", "--b", "b"       ], { a: "a", b: "b"                  });
+    check(["--hasOwnProperty", "a"      ], { hasOwnProperty: "a"             });
+  });
+
   it("should resolve dependencies of 'a' and 'b'", function(done) {
     var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
