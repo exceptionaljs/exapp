@@ -120,6 +120,53 @@ describe("QApp", function() {
     check(["--hasOwnProperty", "a"      ], { hasOwnProperty: "a"             });
   });
 
+  it("should test application's properties", function(done) {
+    var app = qapp({
+      args: {},
+      config: {},
+      logger: ConsoleLogger
+    });
+
+    var knownProperties = [
+      "args",
+      "config",
+      "logger",
+      "state",
+      "stopError",
+      "stopOnFail"
+    ];
+
+    knownProperties.forEach(function(p) {
+      assert.strictEqual(app.hasProperty(p), true);
+    });
+
+    assert.strictEqual(app.getProperty("args"), app.args);
+    assert.strictEqual(app.getProperty("config"), app.config);
+    assert.strictEqual(app.getProperty("logger"), app.logger);
+    assert.strictEqual(app.getProperty("state"), app.getState());
+    assert.strictEqual(app.getProperty("stopError"), null);
+    assert.strictEqual(app.getProperty("stopOnFail"), false);
+
+    app.setProperty("stopOnFail", true);
+    assert.strictEqual(app.getProperty("stopOnFail"), true);
+
+    app.setProperty("args", null);
+    assert.strictEqual(app.args, null);
+
+    app.setProperty("config", null);
+    assert.strictEqual(app.config, null);
+
+    app.setProperty("logger", null);
+    assert.notStrictEqual(app.getProperty("logger"), ConsoleLogger);
+
+    // State is a read-only property.
+    assert.throws(function() {
+      app.setProperty("state", qapp.kRunning);
+    });
+
+    done();
+  });
+
   it("should resolve dependencies of 'a' and 'b'", function(done) {
     var app = qapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
@@ -197,7 +244,7 @@ describe("QApp", function() {
       });
   });
 
-  it("should fail to initialize modules having unknwon dependency", function(done) {
+  it("should fail to initialize modules having unknown dependency", function(done) {
     var app = qapp({ logger: ConsoleLogger })
       .register([A_NoDeps, B_NoDeps])
       .start(["*"], function(err) {
@@ -302,6 +349,104 @@ describe("QApp", function() {
           done();
         });
       });
+  });
+
+  it("should allow calling stop() if start fails", function(done) {
+    var CustomA = {
+      name: "a",
+      deps: [],
+      start: function(app, next) {
+        app.aStarted = true;
+        next(null);
+      },
+      stop: function(app, next) {
+        app.aStopped = true;
+        next(null);
+      }
+    };
+
+    var CustomB = {
+      name: "b",
+      deps: ["a"],
+      start: function(app, next) {
+        app.bStarted = true;
+        next(new Error("Expected failure"));
+      },
+      stop: function(app, next) {
+        app.bStopped = true;
+        next(null);
+      }
+    };
+
+    var app = qapp({
+      logger: ConsoleLogger,
+      modules: [CustomA, CustomB]
+    });
+
+    app.start(["*"], function(err) {
+      assert.notEqual(err, null);
+
+      assert.strictEqual(app.aStarted, true);
+      assert.strictEqual(app.bStarted, true);
+
+      assert.strictEqual(app.bStopped, undefined);
+      assert.strictEqual(app.aStopped, undefined);
+
+      app.stop(function(err) {
+        assert.ifError(err);
+
+        assert.strictEqual(app.bStopped, undefined);
+        assert.strictEqual(app.aStopped, true);
+
+        done();
+      });
+    });
+  });
+
+  it("should automatically call stop if start fails (stopOnFail)", function(done) {
+    var CustomA = {
+      name: "a",
+      deps: [],
+      start: function(app, next) {
+        app.aStarted = true;
+        next(null);
+      },
+      stop: function(app, next) {
+        app.aStopped = true;
+        next(null);
+      }
+    };
+
+    var CustomB = {
+      name: "b",
+      deps: ["a"],
+      start: function(app, next) {
+        app.bStarted = true;
+        next(new Error("Expected failure"));
+      },
+      stop: function(app, next) {
+        app.bStopped = true;
+        next(null);
+      }
+    };
+
+    var app = qapp({
+      logger: ConsoleLogger,
+      modules: [CustomA, CustomB],
+      stopOnFail: true
+    });
+
+    app.start(["*"], function(err) {
+      assert.notEqual(err, null);
+
+      assert.strictEqual(app.aStarted, true);
+      assert.strictEqual(app.bStarted, true);
+
+      assert.strictEqual(app.bStopped, undefined);
+      assert.strictEqual(app.aStopped, true);
+
+      done();
+    });
   });
 
   it("should call afterStart and afterStop handlers", function(done) {

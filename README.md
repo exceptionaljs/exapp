@@ -27,7 +27,7 @@ The `args`, `config`, and `logger` are the only public members within `qapp.App`
 
 The following example demonstrates how to start and stop a `qapp.App` application:
 
-```JS
+```js
 var qapp = require("qapp");
 
 function main() {
@@ -69,8 +69,8 @@ That was a simple example, however, it should explain the basics. Your applicati
 More examples with modules are shown in sections below.
 
 
-Application State
------------------
+Application's State
+-------------------
 
 Application's state can be retrieved by using `app.getState()`, which can return the following:
 
@@ -87,29 +87,47 @@ The following methods provide shortcuts for the most common states:
   * `app.isStopped()` - Returns `true` if the application's state is `kStopped`.
 
 
-Logging Interface
------------------
+Application's Properties
+------------------------
 
-The `qapp.App` has the following members that can be used for logging purposes:
+The `qapp.App` has the following member functions that can be used to access various properties:
 
-  * `log: function(level, msg, ...)` - The main logging interface. The `level` parameter can be `"silly"`, `"debug"`, `"info"`, `"warn"`, or `"error"`. These are the default levels supported by winston and used by `qapp`.
-  * `silly: function(msg, ...)` - Calls `log` with level `"silly"`.
-  * `debug: function(msg, ...)` - Calls `log` with level `"debug"`.
-  * `info: function(msg, ...)` - Calls `log` with level `"info"`.
-  * `warn: function(msg, ...)` - Calls `log` with level `"warn"`.
-  * `error: function(msg, ...)` - Calls `log` with level `"error"`.
+  * `hasProperty(name)` - Get whether the property `name` does exist.
+  * `getProperty(name)` - Get the value of the property `name`. The function throws if the property doesn't exist.
+  * `setProperty(name, value)` - Set the value of the property `name` to `value`. The function throws if the property doesn't exist or is read-only.
+
+The following properties are recognized:
+
+  * `args`       - Application's arguments, also accessible through `app.args`.
+  * `config`     - Application's configuration, also accessible through `app.config`.
+  * `logger`     - Application's logger, also accessible through `app.logger`.
+  * `state`      - Application's state, also accessible through `app.getState()`.
+  * `stopError`  - The error that happened during application's shutdown (default `null`).
+  * `stopOnFail` - Whether the application should automatically call `stop()` if start failed (default `false`).
+
+Application's Logger
+--------------------
+
+The `qapp.App` has the following member functions that can be used for logging purposes:
+
+  * `log(level, msg, ...)` - The main logging interface. The `level` parameter can be `"silly"`, `"debug"`, `"info"`, `"warn"`, or `"error"`. These are the default levels supported by winston and used by `qapp`.
+  * `silly(msg, ...)` - Calls `log` with level `"silly"`.
+  * `debug(msg, ...)` - Calls `log` with level `"debug"`.
+  * `info(msg, ...)` - Calls `log` with level `"info"`.
+  * `warn(msg, ...)` - Calls `log` with level `"warn"`.
+  * `error(msg, ...)` - Calls `log` with level `"error"`.
   * `switchToBufferedLogger()` - Switch to an internal buffered logger, changing the application's logger into a new logger that buffers all logs. Buffered logger is used by default by `qapp` until a real logger is plugged it.
   * `switchToExternalLogger(logger)` - Switch to an external `logger` that is compatible with the interface required by `qapp`.
 
 The main idea is to simplify logging as much as possible, because it's one of the core concepts used by all modules.
 
 
-Module Management
------------------
+Application's Module Management
+-------------------------------
 
 A module is defined by an object that has the following signature:
 
-```JS
+```js
 var Module = {
   // Module name (mandatory).
   name: "module",
@@ -138,7 +156,7 @@ The module object can be immutable, when `start()` and `stop()` functions are ca
 
 The following example describes how to create and start application with modules:
 
-```JS
+```js
 var qapp = require("qapp");
 var util = require("util");
 
@@ -272,7 +290,7 @@ In the example above two modules were created, but they didn't do anything usefu
 
 The example below is consisting of two files:
 
-```JS
+```js
 // ---------------------------------------------------------------------------
 // FILE: module.js
 // ---------------------------------------------------------------------------
@@ -386,7 +404,7 @@ Bootstrapping is a very challenging task. How to do it without quirks in your ap
 
 It's obvious that `bo` depends on `db`. When the application is started it will first start `db` and then `bo`. Priority can be used to put something in the middle in case it's necessary. The following code should demonstrate how this will work:
 
-```JS
+```js
 var qapp = require("qapp");
 var util = require("util");
 

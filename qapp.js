@@ -342,9 +342,18 @@ function App(opt) {
     running     : {},       // Modules running.
     initIndex   : -1,       // Module initialization index.
     initOrder   : null,     // Module initialization order.
+
     handlers: {
       afterStart: [],       // Handlers called after successful start.
       afterStop : []        // Handlers called after successful stop.
+    },
+
+    properties: {
+      // Stop error.
+      stopError: null,
+
+      // Whether to call `stop()` automatically if `start()` fails.
+      stopOnFail: Boolean(opt.stopOnFail)
     }
   };
 
@@ -389,6 +398,75 @@ merge(App.prototype, {
         this.log.apply(this, logs[i]);
     }
 
+    return this;
+  },
+
+  // --------------------------------------------------------------------------
+  // [Properties]
+  // --------------------------------------------------------------------------
+
+  hasProperty: function(name) {
+    switch (name) {
+      case "args":
+      case "config":
+      case "logger":
+      case "state":
+        return true;
+
+      default:
+        return hasOwn.call(this._internal.properties, name);
+    }
+  },
+
+  getProperty: function(name) {
+    var internal = this._internal;
+    switch (name) {
+      case "args":
+      case "config":
+      case "logger":
+        return this[name];
+
+      case "state":
+        return internal.state;
+    }
+
+    var properties = internal.properties;
+    if (!hasOwn.call(properties, name))
+      throw new TypeError("Invalid property '" + name + "'.");
+
+    return properties[name];
+  },
+
+  setProperty: function(name, value) {
+    // Handle `setProperty(Object)`.
+    if (arguments.length === 1 && typeof name === "object") {
+      for (var k in name)
+        this.setProperty(k, name[k]);
+      return this;
+    }
+
+    var internal = this._internal;
+    switch (name) {
+      case "args":
+      case "config":
+        this[name] = value;
+        return this;
+
+      case "logger":
+        if (value)
+          return this.switchToBufferedLogger();
+        else
+          return this.switchToExternalLogger(value);
+
+      case "state":
+        throw new TypeError("Property '" + name + "' is read-only.");
+    }
+
+    var properties = internal.properties;
+    if (!hasOwn.call(properties, name))
+      throw new TypeError("Invalid property '" + name + "'.");
+
+    properties[name] = value;
     return this;
   },
 
@@ -522,12 +600,24 @@ merge(App.prototype, {
     internal.initIndex = -1;
     internal.initOrder = order;
 
+    function failed(err) {
+      internal.state = kFailed;
+
+      // Handle the option `stopOnFail`.
+      if (internal.properties.stopOnFail) {
+        self.stop(function(stopErr) {
+          callAsync(cb, err);
+        });
+      }
+      else {
+        callAsync(cb, err);
+      }
+    }
+
     function iterate(err) {
       if (err) {
         self.log("error", "[APP] Module '" + module.name + "' failed to start: " + err.message);
-
-        internal.state = kFailed;
-        return callAsync(cb, err);
+        return failed(err);
       }
 
       // Return immediately and handle the result without recursing if sync.
@@ -555,11 +645,7 @@ merge(App.prototype, {
           module.start(self, makeCallback(self, "start", module, iterate));
         } catch (ex) {
           self.log("error", "[APP] Module '" + module.name + "' failed to start (thrown): " + ex.message);
-
-          internal.state = kFailed;
-          callAsync(cb, ex);
-
-          return;
+          return failed(ex);
         }
 
         if (++syncOk !== 1)
@@ -578,16 +664,25 @@ merge(App.prototype, {
     var self = this;
     var internal = this._internal;
 
-    if (internal.state !== kRunning) {
-      var msg = internal.state < kRunning
-        ? "Attempt to stop a non-running app."
-        : "Attempt to stop app multiple times.";
+    var toState = kStopped;
+    var stopMsg = "";
 
-      self.log("error", "[APP] " + msg);
-      throw new Error(msg);
+    if (internal.state !== kRunning) {
+      if (internal.state === kFailed && internal.initIndex !== -1) {
+        toState = kFailed;
+        stopMsg = " (stopOnFail)";
+      }
+      else {
+        var msg = internal.state < kRunning
+          ? "Attempt to stop a non-running app."
+          : "Attempt to stop app multiple times.";
+
+        self.log("error", "[APP] " + msg);
+        throw new Error(msg);
+      }
     }
 
-    self.log("silly", "[APP] Stopping.");
+    self.log("silly", "[APP] Stopping" + stopMsg + ".");
     internal.state = kStopping;
 
     var order = internal.initOrder;
@@ -596,12 +691,17 @@ merge(App.prototype, {
     var syncOk = 0;
     var index;
 
+    function failed(err) {
+      internal.state = kFailed;
+      internal.properties.stopError = err;
+
+      callAsync(cb, err);
+    }
+
     function iterate(err) {
       if (err) {
         self.log("error", "[APP] Module '" + module.name + "' failed to stop: " + err.message);
-
-        internal.state = kFailed;
-        return callAsync(cb, err);
+        return failed(err);
       }
 
       // Return immediately and handle the result without recursing if sync.
@@ -613,8 +713,8 @@ merge(App.prototype, {
         syncOk = 1;
 
         if (index === -1) {
-          self.log("silly", "[APP] Stopped.");
-          internal.state = kStopped;
+          self.log("silly", "[APP] Stopped" + stopMsg + ".");
+          internal.state = toState;
 
           callAsync(cb, null);
           callHandlers(self, "afterStop");
@@ -630,9 +730,7 @@ merge(App.prototype, {
             module.stop(self, makeCallback(self, "stop", module, iterate));
           } catch (ex) {
             self.log("error", "[APP] Module '" + module.name + "' failed to stop (thrown): " + ex.message);
-
-            internal.state = kFailed;
-            return callAsync(cb, ex);
+            return failed(ex);
           }
 
           if (++syncOk !== 1)
