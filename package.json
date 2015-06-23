@@ -1,8 +1,8 @@
 {
-  "name": "qapp",
-  "version": "0.1.6",
+  "name": "uapp",
+  "version": "1.0.0",
 
-  "description": "Lightweight application framework with dependency management.",
+  "description": "Universal and modular application framework with dependency management.",
   "keywords": [
     "app",
     "application",
@@ -14,9 +14,9 @@
     "module"
   ],
 
-  "homepage": "https://github.com/jshq/qapp",
+  "homepage": "https://github.com/exceptionaljs/uapp",
   "bugs": {
-    "url": "https://github.com/jshq/qapp/issues"
+    "url": "https://github.com/exceptionaljs/uapp/issues"
   },
 
   "contributors": [{
@@ -27,7 +27,7 @@
 
   "license": "Unlicense",
 
-  "main": "qapp.js",
+  "main": "uapp.js",
 
   "devDependencies": {
     "mocha": "*"
@@ -35,10 +35,10 @@
 
   "repository" : {
     "type": "git",
-    "url": "https://github.com/jshq/qapp.git"
+    "url": "https://github.com/exceptionaljs/uapp.git"
   },
 
   "scripts": {
-    "test": "mocha qapp-spec.js"
+    "test": "mocha uapp-spec.js"
   }
 }

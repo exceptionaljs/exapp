@@ -1,24 +1,29 @@
-// QApp <https://github.com/jshq/qapp>
+// uapp.js <https://github.com/exceptionaljs/uapp>
 (function($export, $as) {
 "use strict";
 
-// \namespace `qapp`
+// \namespace `uapp`
 //
-// QApp namespace, contains exposed API and constants.
-function qapp(opt) {
+// uapp.js namespace, contains exposed API and constants.
+function uapp(opt) {
   return new App(opt);
 }
+
+// `uapp.VERSION`
+//
+// Version information in a "major.minor.patch" form.
+uapp.VERSION = "1.0.0";
 
 // ============================================================================
 // [Constants]
 // ============================================================================
 
-var kPending  = qapp.kPending  = 0;
-var kStarting = qapp.kStarting = 1;
-var kRunning  = qapp.kRunning  = 2;
-var kStopping = qapp.kStopping = 3;
-var kStopped  = qapp.kStopped  = 4;
-var kFailed   = qapp.kFailed   = -1;
+var kFailed   = uapp.kFailed   =-1;
+var kPending  = uapp.kPending  = 0;
+var kStarting = uapp.kStarting = 1;
+var kRunning  = uapp.kRunning  = 2;
+var kStopping = uapp.kStopping = 3;
+var kStopped  = uapp.kStopped  = 4;
 
 // ============================================================================
 // [Internals]
@@ -315,13 +320,13 @@ function parseArguments(argv, start) {
 
   return obj;
 }
-qapp.parseArguments = parseArguments;
+uapp.parseArguments = parseArguments;
 
 // ============================================================================
 // [App]
 // ============================================================================
 
-// \class `qapp.App`
+// \class `uapp.App`
 //
 // Application class.
 function App(opt) {
@@ -760,14 +765,14 @@ merge(App.prototype, {
 
     var list = handlers[action];
     if (list === null)
-      throw new Error("Action '" + action + "' has already fired.")
+      throw new Error("Action '" + action + "' has already fired.");
 
     list.push({ func: func, thisArg: thisArg || null });
     return this;
   }
 });
-qapp.App = App;
+uapp.App = App;
 
-$export[$as] = qapp;
+$export[$as] = uapp;
 
-}).apply(this, typeof module === "object" ? [module, "exports"] : [this, "qapp"]);
+}).apply(this, typeof module === "object" ? [module, "exports"] : [this, "uapp"]);
