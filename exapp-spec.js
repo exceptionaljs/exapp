@@ -1,10 +1,10 @@
-// uapp.js <https://github.com/exceptionaljs/uapp>
+// exapp.js <https://github.com/exceptionaljs/exapp>
 "use strict";
 
 var assert = require("assert");
 var util = require("util");
 
-var uapp = require("./uapp");
+var exapp = require("./exapp");
 
 var ConsoleLogger = {
   log: function(level, msg /*, ... */) {
@@ -13,7 +13,7 @@ var ConsoleLogger = {
     console.log(s);
   }
 };
-uapp.ConsoleLogger = ConsoleLogger;
+exapp.ConsoleLogger = ConsoleLogger;
 
 var Counter = {
   name: "counter",
@@ -80,11 +80,11 @@ var C_NoDeps_PriorityPlusOne = {
   }
 };
 
-describe("uapp", function() {
+describe("exapp", function() {
   it("should test parseArguments()", function() {
     function check(argv, map) {
-      assert.deepEqual(uapp.parseArguments(argv, 0), map);
-      assert.deepEqual(uapp.parseArguments(["node", "app.js"].concat(argv)), map);
+      assert.deepEqual(exapp.parseArguments(argv, 0), map);
+      assert.deepEqual(exapp.parseArguments(["node", "app.js"].concat(argv)), map);
     }
 
     check([                             ], {                                 });
@@ -122,7 +122,7 @@ describe("uapp", function() {
   });
 
   it("should test application's properties", function(done) {
-    var app = uapp({
+    var app = exapp({
       args: {},
       config: {},
       logger: ConsoleLogger
@@ -162,14 +162,14 @@ describe("uapp", function() {
 
     // State is a read-only property.
     assert.throws(function() {
-      app.setProperty("state", uapp.kRunning);
+      app.setProperty("state", exapp.kRunning);
     });
 
     done();
   });
 
   it("should resolve dependencies of 'a' and 'b'", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["a", "b"], function(err) {
         assert.ifError(err);
@@ -180,7 +180,7 @@ describe("uapp", function() {
   });
 
   it("should resolve dependencies of 'b' and 'a'", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, B_DepsOnA, A_NoDeps])
       .start(["b", "a"], function(err) {
         assert.ifError(err);
@@ -191,7 +191,7 @@ describe("uapp", function() {
   });
 
   it("should initialize only 'a'", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["a"], function(err) {
         assert.ifError(err);
@@ -202,7 +202,7 @@ describe("uapp", function() {
   });
 
   it("should initialize only 'b'", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["b"], function(err) {
         assert.ifError(err);
@@ -213,7 +213,7 @@ describe("uapp", function() {
   });
 
   it("should initialize all '*'", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -224,7 +224,7 @@ describe("uapp", function() {
   });
 
   it("should initialize only 'b' (with 'a' as a dependency)", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["b"], function(err) {
         assert.ifError(err);
@@ -235,7 +235,7 @@ describe("uapp", function() {
   });
 
   it("should fail to initialize modules depending on each other", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_DepsOnB, B_DepsOnA])
       .start(["*"], function(err) {
         assert(err);
@@ -246,7 +246,7 @@ describe("uapp", function() {
   });
 
   it("should fail to initialize modules having unknown dependency", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([A_NoDeps, B_NoDeps])
       .start(["*"], function(err) {
         assert(err);
@@ -258,7 +258,7 @@ describe("uapp", function() {
 
 
   it("should fail to initialize an unknown module", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["unknown"], function(err) {
         assert(err);
@@ -269,7 +269,7 @@ describe("uapp", function() {
   });
 
   it("should resolve correct order if module has a priority (-1)", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, C_NoDeps_PriorityMinusOne])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -280,7 +280,7 @@ describe("uapp", function() {
   });
 
   it("should resolve correct order if module has a priority (+1)", function(done) {
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, C_NoDeps_PriorityPlusOne])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -299,7 +299,7 @@ describe("uapp", function() {
       }
     };
 
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Throw])
       .start(["throw"], function(err) {
         assert(err);
@@ -335,7 +335,7 @@ describe("uapp", function() {
       }
     };
 
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Counter, CustomA, CustomB])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -379,7 +379,7 @@ describe("uapp", function() {
       }
     };
 
-    var app = uapp({
+    var app = exapp({
       logger: ConsoleLogger,
       modules: [CustomA, CustomB]
     });
@@ -431,7 +431,7 @@ describe("uapp", function() {
       }
     };
 
-    var app = uapp({
+    var app = exapp({
       logger: ConsoleLogger,
       modules: [CustomA, CustomB],
       stopOnFail: true
@@ -470,7 +470,7 @@ describe("uapp", function() {
       }
     };
 
-    var app = uapp({ logger: ConsoleLogger })
+    var app = exapp({ logger: ConsoleLogger })
       .register([Module])
       .start(["*"], function(err) {
         assert.ifError(err);

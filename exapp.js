@@ -1,29 +1,29 @@
-// uapp.js <https://github.com/exceptionaljs/uapp>
+// exapp.js <https://github.com/exceptionaljs/exapp>
 (function($export, $as) {
 "use strict";
 
-// \namespace `uapp`
+// \namespace `exapp`
 //
-// uapp.js namespace, contains exposed API and constants.
-function uapp(opt) {
+// exapp.js namespace, contains exposed API and constants.
+function exapp(opt) {
   return new App(opt);
 }
 
-// `uapp.VERSION`
+// `exapp.VERSION`
 //
 // Version information in a "major.minor.patch" form.
-uapp.VERSION = "1.0.0";
+exapp.VERSION = "1.0.0";
 
 // ============================================================================
 // [Constants]
 // ============================================================================
 
-var kFailed   = uapp.kFailed   =-1;
-var kPending  = uapp.kPending  = 0;
-var kStarting = uapp.kStarting = 1;
-var kRunning  = uapp.kRunning  = 2;
-var kStopping = uapp.kStopping = 3;
-var kStopped  = uapp.kStopped  = 4;
+var kFailed   = exapp.kFailed   =-1;
+var kPending  = exapp.kPending  = 0;
+var kStarting = exapp.kStarting = 1;
+var kRunning  = exapp.kRunning  = 2;
+var kStopping = exapp.kStopping = 3;
+var kStopped  = exapp.kStopped  = 4;
 
 // ============================================================================
 // [Internals]
@@ -320,13 +320,13 @@ function parseArguments(argv, start) {
 
   return obj;
 }
-uapp.parseArguments = parseArguments;
+exapp.parseArguments = parseArguments;
 
 // ============================================================================
 // [App]
 // ============================================================================
 
-// \class `uapp.App`
+// \class `exapp.App`
 //
 // Application class.
 function App(opt) {
@@ -771,8 +771,8 @@ merge(App.prototype, {
     return this;
   }
 });
-uapp.App = App;
+exapp.App = App;
 
-$export[$as] = uapp;
+$export[$as] = exapp;
 
-}).apply(this, typeof module === "object" ? [module, "exports"] : [this, "uapp"]);
+}).apply(this, typeof module === "object" ? [module, "exports"] : [this, "exapp"]);

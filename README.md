@@ -1,12 +1,12 @@
-uapp.js
-=======
+exapp.js
+========
 
-  * [Official Repository (exceptionaljs/uapp)](https://github.com/exceptionaljs/uapp)
+  * [Official Repository (exceptionaljs/exapp)](https://github.com/exceptionaljs/exapp)
   * [Public Domain (unlicense.org)](http://unlicense.org)
 
-uapp.js is a universal and modular application framework for node.js that has zero dependencies. It can be used to develop applications composing of multiple modules with a possibility to specify which modules to use. The framework itself defines a minimal interface that can be used to define modules, their dependencies, and a way how to start and stop them. It contains an interface for logging, module management, and application's lifetime management. Everything else has to be provided by uapp.js consumers.
+exapp.js is a universal and modular application framework for node.js that has zero dependencies. It can be used to develop applications composing of multiple modules with a possibility to specify which modules to use. The framework itself defines a minimal interface that can be used to define modules, their dependencies, and a way how to start and stop them. It contains an interface for logging, module management, and application's lifetime management. Everything else has to be provided by exapp.js consumers.
 
-The reason uapp.js has been developed is that sometimes your application is not just an `express()` object. Many node modules and applications just create `express()`, put some variables into it, and use as many globals as they can in various modules for various purposes. The uapp.js philosophy is different - it tries to isolate everything within an `app` object. It allows to define modules that can be started / stopped in a correct order; and let these modules share information they need through the `app` object. Every module can put its own information into `app` and other modules (that depend on it) can use it.
+The reason exapp.js has been developed is that sometimes your application is not just an `express()` object. Many node modules and applications just create `express()`, put some variables into it, and use as many globals as they can in various modules for various purposes. The exapp.js philosophy is different - it tries to isolate everything within an `app` object. It allows to define modules that can be started / stopped in a correct order; and let these modules share information they need through the `app` object. Every module can put its own information into `app` and other modules (that depend on it) can use it.
 
 The framework allows to specify which modules to run on application startup. There are cases where one application instance runs only a subset of available modules. This is useful in cases that you want to share the whole code-base, but run several instances of your application having different configuration or different modules.
 
@@ -14,24 +14,24 @@ The framework allows to specify which modules to run on application startup. The
 Application Object and Lifetime
 -------------------------------
 
-The framework provides only one class that can be extended by you or just used as is. The class is exported as `uapp.App` and can be instantiated by calling `new uapp.App()` or simply by calling `uapp()`. After called, it returns an application object (always referenced as `app` in documentation and tests) that should be the only top level object you have. In general, you don't even need to store the object anywhere as it can just live on its own.
+The framework provides only one class that can be extended by you or just used as is. The class is exported as `exapp.App` and can be instantiated by calling `new exapp.App()` or simply by calling `exapp()`. After called, it returns an application object (always referenced as `app` in documentation and tests) that should be the only top level object you have. In general, you don't even need to store the object anywhere as it can just live on its own.
 
-The `uapp.App` constructor accepts an optional `opt` argument, which can be an object having the following properties:
+The `exapp.App` constructor accepts an optional `opt` argument, which can be an object having the following properties:
 
-  * `args` - Application arguments object. Not used directly by uapp.js, it's an arguments object that can be used by modules. You can use `uapp.parseArguments()` utility function to parse command line arguments and turn them into a dictionary, but the functionality is rather limited. If you need a more robust arguments parsing you should consider some third party libraries.
-  * `config` - Application configuration object. Not used directly by `uapp`, it's a configuration that can be used by modules.
-  * `logger` - An object that provides a `log(level, msg, ...)` function. If you use `winston` for logging you can just pass its instance, otherwise `uapp` will buffer all logs until you provide a logger that is compatible with the interface described (one of your modules can provide a logger).
+  * `args` - Application arguments object. Not used directly by exapp.js, it's an arguments object that can be used by modules. You can use `exapp.parseArguments()` utility function to parse command line arguments and turn them into a dictionary, but the functionality is rather limited. If you need a more robust arguments parsing you should consider some third party libraries.
+  * `config` - Application configuration object. Not used directly by `exapp`, it's a configuration that can be used by modules.
+  * `logger` - An object that provides a `log(level, msg, ...)` function. If you use `winston` for logging you can just pass its instance, otherwise `exapp` will buffer all logs until you provide a logger that is compatible with the interface described (one of your modules can provide a logger).
   * `modules` - Application modules to register, passed to `App.register()`.
 
-The `args`, `config`, and `logger` are the only public members within `uapp.App` that can be accessed directly. Everything else is available to modules, except `app._internal` (which is used exclusively by the implementation) and member functions provided by `uapp.App`.
+The `args`, `config`, and `logger` are the only public members within `exapp.App` that can be accessed directly. Everything else is available to modules, except `app._internal` (which is used exclusively by the implementation) and member functions provided by `exapp.App`.
 
-The following example demonstrates how to start and stop a `uapp.App` application:
+The following example demonstrates how to start and stop a `exapp.App` application:
 
 ```js
-var uapp = require("uapp");
+var exapp = require("exapp");
 
 function main() {
-  var app = uapp({
+  var app = exapp({
     // Configuration example.
     config: {
       http: {
@@ -74,12 +74,12 @@ Application's State
 
 Application's state can be retrieved by using `app.getState()`, which can return the following:
 
-  * `uapp.kPending` - Application is pending, waiting for `start()` to be called.
-  * `uapp.kStarting` - Application is starting, a `start()` has been called, but not all modules started.
-  * `uapp.kRunning` - Application is running with all modules started successfully.
-  * `uapp.kStopping` - Application is stopping, a `stop()` has been called, but not all modules stopped.
-  * `uapp.kStopped` - Application is not running; all modules stopped successfully.
-  * `uapp.kFailed` - Failed to either `start()` or `stop()`.
+  * `exapp.kPending` - Application is pending, waiting for `start()` to be called.
+  * `exapp.kStarting` - Application is starting, a `start()` has been called, but not all modules started.
+  * `exapp.kRunning` - Application is running with all modules started successfully.
+  * `exapp.kStopping` - Application is stopping, a `stop()` has been called, but not all modules stopped.
+  * `exapp.kStopped` - Application is not running; all modules stopped successfully.
+  * `exapp.kFailed` - Failed to either `start()` or `stop()`.
 
 The following methods provide shortcuts for the most common states:
 
@@ -90,7 +90,7 @@ The following methods provide shortcuts for the most common states:
 Application's Properties
 ------------------------
 
-The `uapp.App` has the following member functions that can be used to access various properties:
+The `exapp.App` has the following member functions that can be used to access various properties:
 
   * `hasProperty(name)` - Get whether the property `name` does exist.
   * `getProperty(name)` - Get the value of the property `name`. The function throws if the property doesn't exist.
@@ -108,16 +108,16 @@ The following properties are recognized:
 Application's Logger
 --------------------
 
-The `uapp.App` has the following member functions that can be used for logging purposes:
+The `exapp.App` has the following member functions that can be used for logging purposes:
 
-  * `log(level, msg, ...)` - The main logging interface. The `level` parameter can be `"silly"`, `"debug"`, `"info"`, `"warn"`, or `"error"`. These are the default levels supported by winston and used by uapp.js.
+  * `log(level, msg, ...)` - The main logging interface. The `level` parameter can be `"silly"`, `"debug"`, `"info"`, `"warn"`, or `"error"`. These are the default levels supported by winston and used by exapp.js.
   * `silly(msg, ...)` - Calls `log` with level `"silly"`.
   * `debug(msg, ...)` - Calls `log` with level `"debug"`.
   * `info(msg, ...)` - Calls `log` with level `"info"`.
   * `warn(msg, ...)` - Calls `log` with level `"warn"`.
   * `error(msg, ...)` - Calls `log` with level `"error"`.
-  * `switchToBufferedLogger()` - Switch to an internal buffered logger, changing the application's logger into a new logger that buffers all logs. Buffered logger is used by default by uapp.js until a real logger is plugged it.
-  * `switchToExternalLogger(logger)` - Switch to an external `logger` that is compatible with the interface required by uapp.js.
+  * `switchToBufferedLogger()` - Switch to an internal buffered logger, changing the application's logger into a new logger that buffers all logs. Buffered logger is used by default by exapp.js until a real logger is plugged it.
+  * `switchToExternalLogger(logger)` - Switch to an external `logger` that is compatible with the interface required by exapp.js.
 
 The main idea is to simplify logging as much as possible, because it's one of the core concepts used by all modules.
 
@@ -150,17 +150,17 @@ var Module = {
 };
 ```
 
-Mandatory members are required if the module wants to be recognizable by uapp.js, otherwise registering such module will fail (`TypeError`). Basically the only required members are `name`, `deps`, and `start()`. Other members are purely optional, however, you probably want provide `stop()` as well to perform a per module cleanup.
+Mandatory members are required if the module wants to be recognizable by exapp.js, otherwise registering such module will fail (`TypeError`). Basically the only required members are `name`, `deps`, and `start()`. Other members are purely optional, however, you probably want provide `stop()` as well to perform a per module cleanup.
 
 The module object can be immutable, when `start()` and `stop()` functions are called the `app` object is always provided. The purpose of modules is to store information in it during startup, and remove that information during shutdown. The functionality itself can be implemented as a class and just instantiated by the module.
 
 The following example describes how to create and start application with modules:
 
 ```js
-var uapp = require("uapp");
+var exapp = require("exapp");
 var util = require("util");
 
-// A logger compatible with `uapp.logger` interface. Implemented here to show
+// A logger compatible with `exapp.logger` interface. Implemented here to show
 // how to implement your own logging if you don't use winston, for example.
 var ConsoleLogger = {
   log: function(level, msg /*, ... */) {
@@ -170,7 +170,7 @@ var ConsoleLogger = {
   }
 };
 
-// Define a ModuleA. This object conforms to a signature expected by uapp.js.
+// Define a ModuleA. This object conforms to a signature expected by exapp.js.
 var ModuleA = {
   name: "a",
   deps: [],
@@ -221,7 +221,7 @@ var ModuleB = {
 
 // Application's entry point.
 function main() {
-  var app = uapp({
+  var app = exapp({
     logger: ConsoleLogger,
     config: {
       a: {
@@ -278,9 +278,9 @@ The example logs the following when run:
 Utility Functions
 -----------------
 
-The following utility functions are exported by uapp.js:
+The following utility functions are exported by exapp.js:
 
-  - `uapp.parseArguments(argv, start = 2)` - Parse an application's arguments from `argv` into a dictionary. For example the following array `["node", "app.js", "--key=value"]` would be parsed to `{ key: "value" }`.
+  - `exapp.parseArguments(argv, start = 2)` - Parse an application's arguments from `argv` into a dictionary. For example the following array `["node", "app.js", "--key=value"]` would be parsed to `{ key: "value" }`.
 
 
 Tips - Module as a Class
@@ -352,7 +352,7 @@ module.exports = {
 // FILE main.js
 // ---------------------------------------------------------------------------
 
-var uapp = require("uapp");
+var exapp = require("exapp");
 var util = require("util");
 
 // A console logger.
@@ -365,14 +365,14 @@ var ConsoleLogger = {
 };
 
 function main() {
-  var app = uapp({
+  var app = exapp({
     logger: ConsoleLogger,
     config: {}
   });
 
   // Register modules. This is just an example, you can always use something
   // like `index.js` to load and return all modules in a directory, again,
-  // uapp.js doesn't dictate how this should be done.
+  // exapp.js doesn't dictate how this should be done.
   app.register([
     require("./module")
   ]);
@@ -397,7 +397,7 @@ Firstly, we created a module in a file `module.js` that is imported from `main.j
 Tips - Using Priority to Bootstrap / Migrate
 --------------------------------------------
 
-Bootstrapping is a very challenging task. How to do it without quirks in your application? Well, you can do it with uapp.js by taking advantage of module priorities. Let's consider that we have the following modules:
+Bootstrapping is a very challenging task. How to do it without quirks in your application? Well, you can do it with exapp.js by taking advantage of module priorities. Let's consider that we have the following modules:
 
   * `db` - This is a module responsible for establishing a DB connection in `start()` handler and closing it in `stop()` handler.
   * `bo` - This is your business object that is using `db` in some way. It expects your database to be working and already bootstrapped.
@@ -405,7 +405,7 @@ Bootstrapping is a very challenging task. How to do it without quirks in your ap
 It's obvious that `bo` depends on `db`. When the application is started it will first start `db` and then `bo`. Priority can be used to put something in the middle in case it's necessary. The following code should demonstrate how this will work:
 
 ```js
-var uapp = require("uapp");
+var exapp = require("exapp");
 var util = require("util");
 
 // Bootstrap module.
@@ -426,12 +426,12 @@ var BootstrapModule = {
 };
 
 function main(argv) {
-  var app = uapp({
+  var app = exapp({
     logger: ConsoleLogger,
     config: {}
   });
 
-  // Register modules. Again, uapp.js doesn't dictate where to look for a modules
+  // Register modules. Again, exapp.js doesn't dictate where to look for a modules
   // to be registered. This is just an example. You can use something like
   // `index.js` to load and return all modules in a directory, etc...
   app.register([
@@ -459,4 +459,4 @@ main(process.argv);
 License
 -------
 
-uapp.js has been released to public domain, [(see unlicense.org)](http://unlicense.org/).
+exapp.js has been released to public domain, [see unlicense.org](http://unlicense.org/).

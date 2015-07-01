@@ -1,5 +1,5 @@
 {
-  "name": "uapp",
+  "name": "exapp",
   "version": "1.0.0",
 
   "description": "Universal and modular application framework with dependency management.",
@@ -14,9 +14,9 @@
     "module"
   ],
 
-  "homepage": "https://github.com/exceptionaljs/uapp",
+  "homepage": "https://github.com/exceptionaljs/exapp",
   "bugs": {
-    "url": "https://github.com/exceptionaljs/uapp/issues"
+    "url": "https://github.com/exceptionaljs/exapp/issues"
   },
 
   "contributors": [{
@@ -27,7 +27,7 @@
 
   "license": "Unlicense",
 
-  "main": "uapp.js",
+  "main": "exapp.js",
 
   "devDependencies": {
     "mocha": "*"
@@ -35,10 +35,10 @@
 
   "repository" : {
     "type": "git",
-    "url": "https://github.com/exceptionaljs/uapp.git"
+    "url": "https://github.com/exceptionaljs/exapp.git"
   },
 
   "scripts": {
-    "test": "mocha uapp-spec.js"
+    "test": "mocha exapp-spec.js"
   }
 }
