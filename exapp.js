@@ -5,14 +5,12 @@
 // \namespace `exapp`
 //
 // exapp.js namespace, contains exposed API and constants.
-function exapp(opt) {
-  return new App(opt);
-}
+function exapp(opt) { return new App(opt); }
 
 // `exapp.VERSION`
 //
 // Version information in a "major.minor.patch" form.
-exapp.VERSION = "1.0.0";
+exapp.VERSION = "1.1.0";
 
 // ============================================================================
 // [Constants]
@@ -261,6 +259,8 @@ function callHandlers(app, action) {
 // [Utilities]
 // ============================================================================
 
+// \function `exapp.parseArguments(argv, start)`
+//
 // Parse application's arguments from argv[] to an object.
 function parseArguments(argv, start) {
   var reOne = /^-(\w+)$/;
@@ -321,6 +321,66 @@ function parseArguments(argv, start) {
   return obj;
 }
 exapp.parseArguments = parseArguments;
+
+// \function `exapp.modularize(opt)`
+//
+// Modularize a module class (that has to be instantiated) with `config`.
+//
+// What this function does is to return an object that represents a exapp.js
+// module based on `Module`. It basically returns the expected module object
+// that contains `start()` and `stop()` functions (which call start/stop on
+// the instantiated module) and other parameters based on `opt`.
+//
+// The following named parameters (keys in `opt`) are processed:
+//
+//   `module` - Module class to be instantiated (by using `new` operator).
+//   `as`     - Key in `app` to store the instantiated module to. If `as` is not
+//              present `name` will be used instead.
+//   `name`   - Module name, if not specified `module.name` would be used.
+//   `deps`   - Module dependencies, added to possible deps specified by `module`.
+//   `config` - Module configuration, passed to the module constructor.
+//
+// The module is instantiated as `new module(app, config)`.
+function modularize(opt) {
+  var Module = opt.module;
+  var instance = null;
+
+  var name = opt.name || Module.name;
+  if (!name)
+    throw new TypeError("exapp.modularize() - Name not specified");
+
+  var as = opt.as || name;
+  var deps = (Module.deps || []).concat(opt.deps || []);
+  var config = opt.config || {};
+
+  return {
+    name    : name,
+    deps    : deps,
+    priority: (opt.priority || Module.priority) || 0,
+    start   : start,
+    stop    : stop
+  };
+
+  function start(app, cb) {
+    instance = app[as] = new Module(app, config);
+    instance.start(cb);
+  }
+
+  function stop(app, cb) {
+    function resetCb(err) {
+      // Reset only if the `stop` haven't failed.
+      if (!err)
+        app[as] = null;
+      cb(err);
+    }
+
+    if (typeof instance.stop === "function")
+      instance.stop(resetCb);
+    else
+      setImmediate(resetCb, null);
+  }
+}
+exapp.modularize = modularize;
 
 // ============================================================================
 // [App]

@@ -484,4 +484,66 @@ describe("exapp", function() {
         });
       });
   });
+
+  it("should test exapp.modularize()", function(done) {
+    function ModuleA(app, config) {
+      this.app = app;
+      this.config = config;
+    };
+
+    var aStatus = 0;
+    var bStatus = 0;
+
+    ModuleA.prototype.start = function(cb) {
+      aStatus = 1;
+      setImmediate(cb, null);
+    };
+
+    ModuleA.prototype.stop = function(cb) {
+      aStatus = 2;
+      setImmediate(cb, null);
+    };
+
+    function ModuleB(app, config) {
+      this.app = app;
+      this.config = config;
+    };
+
+    ModuleB.prototype.start = function(cb) {
+      bStatus = 1;
+      setImmediate(cb, null);
+    };
+
+    ModuleB.prototype.stop = function(cb) {
+      bStatus = 2;
+      setImmediate(cb, null);
+    };
+
+    ModuleB.deps = ["a"];
+
+    var app = exapp({ logger: ConsoleLogger })
+      .register([
+        exapp.modularize({ module: ModuleA, name: "a" }),
+        exapp.modularize({ module: ModuleB, name: "b" })
+      ])
+      .start(["*"], function(err) {
+        assert.ifError(err);
+
+        assert.strictEqual(typeof app.a, "object");
+        assert.strictEqual(typeof app.b, "object");
+        assert.strictEqual(aStatus, 1);
+        assert.strictEqual(bStatus, 1);
+
+        app.stop(function(err) {
+          assert.ifError(err);
+
+          assert.strictEqual(app.a, null);
+          assert.strictEqual(app.b, null);
+          assert.strictEqual(aStatus, 2);
+          assert.strictEqual(bStatus, 2);
+
+          done();
+        });
+      });
+  });
 });

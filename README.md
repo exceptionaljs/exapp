@@ -4,7 +4,7 @@ exapp.js
   * [Official Repository (exceptionaljs/exapp)](https://github.com/exceptionaljs/exapp)
   * [Public Domain (unlicense.org)](http://unlicense.org)
 
-exapp.js is a universal and modular application framework for node.js that has zero dependencies. It can be used to develop applications composing of multiple modules with a possibility to specify which modules to use. The framework itself defines a minimal interface that can be used to define modules, their dependencies, and a way how to start and stop them. It contains an interface for logging, module management, and application's lifetime management. Everything else has to be provided by exapp.js consumers.
+exapp.js is an extensible application framework for node.js that has zero dependencies. It can be used to develop applications composing of multiple modules with a possibility to specify which modules to use. The framework itself defines a minimal interface that can be used to define modules, their dependencies, and a way how to start and stop them. It contains an interface for logging, module management, and application's lifetime management. Everything else has to be provided by exapp.js consumers.
 
 The reason exapp.js has been developed is that sometimes your application is not just an `express()` object. Many node modules and applications just create `express()`, put some variables into it, and use as many globals as they can in various modules for various purposes. The exapp.js philosophy is different - it tries to isolate everything within an `app` object. It allows to define modules that can be started / stopped in a correct order; and let these modules share information they need through the `app` object. Every module can put its own information into `app` and other modules (that depend on it) can use it.
 
@@ -295,15 +295,15 @@ The example below is consisting of two files:
 // FILE: module.js
 // ---------------------------------------------------------------------------
 
-// We use `qclass` to create a JS classes. It's much shorter than dealing
+// We use `exclass` to create a JS classes. It's much shorter than dealing
 // with `Function.prototype` here.
-var qclass = require("qclass");
+var exclass = require("exclass");
 
 // A module class - object oriented way of creating your own modules. The
 // framework doesn't dictate how to do such class, the only important thing
 // to do is to backlink the `app` object in the module itself, so the module
 // can access the `app` at any time.
-var Module = qclass({
+var Module = exclass({
   $construct: function(app) {
     // Backlink the `app` within the module.
     this.app = app;
