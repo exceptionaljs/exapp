@@ -10,7 +10,7 @@ function exapp(opt) { return new App(opt); }
 // `exapp.VERSION`
 //
 // Version information in a "major.minor.patch" form.
-exapp.VERSION = "1.1.0";
+exapp.VERSION = "1.2.0";
 
 // ============================================================================
 // [Constants]
@@ -351,7 +351,7 @@ function modularize(opt) {
 
   var as = opt.as || name;
   var deps = (Module.deps || []).concat(opt.deps || []);
-  var config = opt.config || {};
+  var optCfg = opt.config;
 
   return {
     name    : name,
@@ -362,6 +362,24 @@ function modularize(opt) {
   };
 
   function start(app, cb) {
+    var config = null;
+
+    if (!optCfg)
+      optCfg = name;
+
+    if (typeof optCfg === "object" && optCfg !== null) {
+      // If the `config` is an object we just pass it to the module as-is.
+      config = optCfg;
+    }
+    else if (typeof optCfg === "string" && hasOwn.call(app.config, optCfg)) {
+      // If the `config` is a string then it's a key of the `app.config`.
+      config = app.config[optCfg];
+    }
+
+    // If no configuration has been provided we default to an empty object.
+    if (config == null)
+      config = {};
+
     instance = app[as] = new Module(app, config);
     instance.start(cb);
   }
