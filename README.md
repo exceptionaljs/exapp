@@ -1,7 +1,7 @@
 exapp.js
 ========
 
-  * [Official Repository (exceptionaljs/exapp)](https://github.com/exceptionaljs/exapp)
+  * [Official Repository (exjs/exapp)](https://github.com/exjs/exapp)
   * [Public Domain (unlicense.org)](http://unlicense.org)
 
 exapp.js is an extensible application framework for node.js that has zero dependencies. It can be used to develop applications composing of multiple modules with a possibility to specify which modules to use. The framework itself defines a minimal interface that can be used to define modules, their dependencies, and a way how to start and stop them. It contains an interface for logging, module management, and application's lifetime management. Everything else has to be provided by exapp.js consumers.

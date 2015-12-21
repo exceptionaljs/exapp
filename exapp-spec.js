@@ -1,4 +1,4 @@
-// exapp.js <https://github.com/exceptionaljs/exapp>
+// exapp.js <https://github.com/exjs/exapp>
 "use strict";
 
 var assert = require("assert");
