@@ -10,7 +10,7 @@ function exapp(opt) { return new App(opt); }
 // `exapp.VERSION`
 //
 // Version information in a "major.minor.patch" form.
-exapp.VERSION = "1.2.0";
+exapp.VERSION = "1.4.0";
 
 // ============================================================================
 // [Constants]
@@ -324,7 +324,7 @@ exapp.parseArguments = parseArguments;
 
 // \function `exapp.modularize(opt)`
 //
-// Modularize a module class (that has to be instantiated) with `config`.
+// Modularize a module or a class (that has to be instantiated) with `config`.
 //
 // What this function does is to return an object that represents a exapp.js
 // module based on `Module`. It basically returns the expected module object
@@ -333,7 +333,9 @@ exapp.parseArguments = parseArguments;
 //
 // The following named parameters (keys in `opt`) are processed:
 //
-//   `module` - Module class to be instantiated (by using `new` operator).
+//   `module` - Module or class to be instantiated (by using `new` operator) or
+//              by calling `module.new()`, which has a priority over using `new`
+//              operator.
 //   `as`     - Key in `app` to store the instantiated module to. If `as` is not
 //              present `name` will be used instead.
 //   `name`   - Module name, if not specified `module.name` would be used.
@@ -380,7 +382,12 @@ function modularize(opt) {
     if (config == null)
       config = {};
 
-    instance = app[as] = new Module(app, config);
+    if (hasOwn.call(Module, "new"))
+      instance = Module["new"](app, config);
+    else
+      instance = new Module(app, config);
+
+    app[as] = instance;
     instance.start(cb);
   }
 

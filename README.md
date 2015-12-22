@@ -282,21 +282,35 @@ The following utility functions are exported by exapp.js:
 
   - `exapp.parseArguments(argv, start = 2)` - Parse an application's arguments from `argv` into a dictionary. For example the following array `["node", "app.js", "--key=value"]` would be parsed to `{ key: "value" }`.
 
+  - `exapp.modularize(opt)` - Modularize a module or a class (that has to be instantiated) with `config`. This function is described in a separate section `Modularize`.
 
-Tips - Module as a Class
-------------------------
 
-In the example above two modules were created, but they didn't do anything useful. Modules themselves are considered immutable and `start()` and `stop()` handlers shouldn't write anything to them, only the `app` object should be used to access data that is mutable. However, you don't want to start doing this in `start()` and `stop()` handlers, it's better to use more object oriented approach to instantiate your own classes that you associate with the `app` object.
+Modularize
+----------
 
-The example below is consisting of two files:
+The exapp.js architecture has been designed to make maintaining and writing application's modules easier. It would be annoying to wrap every module or class into an object that is compatible with exapp.js interface. Also, sometimes the application wants to use the same module more than once. The `exapp.modularize(opt)` function was designed to solve this problem.
+
+The `opt` parameter may contain the following:
+  - `module` - Module or class to be instantiated (by using `new` operator) or by calling `module.new()`, which has a priority over using `new` operator (mandatory).
+  - `as`     - Key in `app` to store the instantiated module to. If `as` is not present `name` will be used instead (optional).
+  - `name`   - Module name, if not specified `module.name` would be used (optional).
+  - `deps`   - Module dependencies, added to possible deps specified by `module` (optional).
+  - `config` - Module configuration, passed to the module constructor (mandatory).
+
+This means that instead of exporting an exapp.js compatible interface, exapp modules can just export a class to be instantiated or a module containing "new" function, that will return the instantiated module. This has several advantages:
+
+  - Module can be a JS class that implements some basics (start / end).
+  - Modules don't have to depend on exapp, the only requirement is to store the `app` object as "app" in the instantiated module.
+  - It's possible to implement a complex logic that will instantiate a module based on the configuration. For example a DB driver can instantiate a DB specific driver based on the configuration.
+
+Here is a following example that uses `modularize` (two files):
 
 ```js
 // ---------------------------------------------------------------------------
 // FILE: module.js
 // ---------------------------------------------------------------------------
 
-// We use `exclass` to create a JS classes. It's much shorter than dealing
-// with `Function.prototype` here.
+// Use `exclass` to create a JS class.
 var exclass = require("exclass");
 
 // A module class - object oriented way of creating your own modules. The
@@ -304,7 +318,7 @@ var exclass = require("exclass");
 // to do is to backlink the `app` object in the module itself, so the module
 // can access the `app` at any time.
 var Module = exclass({
-  $construct: function(app) {
+  $construct: function(app, config) {
     // Backlink the `app` within the module.
     this.app = app;
 
@@ -312,18 +326,16 @@ var Module = exclass({
     this.started = false;
   },
 
-  // Your start handler.
+  // Module start handler.
   start: function(next) {
-    // You can access `this`.
     this.started = true;
     this.app.silly("[MOD] Module.start() - called");
 
     next();
   },
 
-  // Your stop handler.
+  // Module stop handler.
   stop: function(next) {
-    // You can access `this`.
     this.started = false;
     this.app.silly("[MOD] Module.stop() - called");
 
@@ -332,21 +344,7 @@ var Module = exclass({
 
   // Any other members...?
 });
-
-// Export the signature of the module so it can be simply `require()`d.
-module.exports = {
-  name: "module",
-  deps: [],
-
-  start: function(app, next) {
-    app.module = new Module(app);
-    app.module.start(next);
-  },
-
-  stop: function(app, next) {
-    app.module.stop(next)
-  }
-};
+module.exports = Module;
 
 // ---------------------------------------------------------------------------
 // FILE main.js
@@ -354,6 +352,7 @@ module.exports = {
 
 var exapp = require("exapp");
 var util = require("util");
+var Module = require("./module");
 
 // A console logger.
 var ConsoleLogger = {
@@ -367,35 +366,31 @@ var ConsoleLogger = {
 function main() {
   var app = exapp({
     logger: ConsoleLogger,
-    config: {}
+    config: {
+      module: {} // Module configuration (if needed)
+    }
   });
 
-  // Register modules. This is just an example, you can always use something
-  // like `index.js` to load and return all modules in a directory, again,
-  // exapp.js doesn't dictate how this should be done.
-  app.register([
-    require("./module")
-  ]);
+  // This is a modularized `Module`, accessible as "module" and using config
+  // key "module".
+  app.register(exapp.modularize({ module: Module, as: "module", config: "module" }));
 
   // Start the app.
   app.start(["*"], function(err) {
-    // ... your on-start code ...
-
+    // Nothing to do, just stop now after it started.
     app.stop(function(err) {
-      // ... your on-stop code ...
     });
   });
 }
 
 main();
-
 ```
 
-Firstly, we created a module in a file `module.js` that is imported from `main.js`. The module itself exports its signature in `module.exports`, which is basically just a wrapper around the `Module` class. The `app` object is stored within the module instance so it can be used later on. The application registers the module by `app.register()` and then the module is started automatically as we passed `["*"]` into the `app.start()`.
+The example should be self-explanatory.
 
 
-Tips - Using Priority to Bootstrap / Migrate
---------------------------------------------
+Using Priority to Bootstrap the Application
+-------------------------------------------
 
 Bootstrapping is a very challenging task. How to do it without quirks in your application? Well, you can do it with exapp.js by taking advantage of module priorities. Let's consider that we have the following modules:
 
@@ -459,4 +454,4 @@ main(process.argv);
 License
 -------
 
-exapp.js has been released to public domain, [see unlicense.org](http://unlicense.org/).
+exapp.js has been released into the public domain, [see unlicense.org](http://unlicense.org/).

@@ -498,7 +498,6 @@ describe("exapp", function() {
       aStatus = 1;
       setImmediate(cb, null);
     };
-
     ModuleA.prototype.stop = function(cb) {
       aStatus = 2;
       setImmediate(cb, null);
@@ -508,17 +507,19 @@ describe("exapp", function() {
       this.app = app;
       this.config = config;
     };
-
+    ModuleB.new = function(app, config) {
+      var self = new ModuleB(app, config);
+      self.instantiatedByNewFunction = true;
+      return self;
+    }
     ModuleB.prototype.start = function(cb) {
       bStatus = 1;
       setImmediate(cb, null);
     };
-
     ModuleB.prototype.stop = function(cb) {
       bStatus = 2;
       setImmediate(cb, null);
     };
-
     ModuleB.deps = ["a"];
 
     var app = exapp({ logger: ConsoleLogger })
@@ -533,6 +534,7 @@ describe("exapp", function() {
         assert.strictEqual(typeof app.b, "object");
         assert.strictEqual(aStatus, 1);
         assert.strictEqual(bStatus, 1);
+        assert.strictEqual(app.b.instantiatedByNewFunction, true);
 
         app.stop(function(err) {
           assert.ifError(err);
