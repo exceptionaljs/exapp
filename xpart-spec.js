@@ -1,10 +1,10 @@
-// exapp.js <https://github.com/exjs/exapp>
+// xpart.js <https://github.com/exjs/xpart>
 "use strict";
 
 var assert = require("assert");
 var util = require("util");
 
-var exapp = require("./exapp");
+var xpart = require("./xpart");
 
 var ConsoleLogger = {
   log: function(level, msg /*, ... */) {
@@ -13,7 +13,7 @@ var ConsoleLogger = {
     console.log(s);
   }
 };
-exapp.ConsoleLogger = ConsoleLogger;
+xpart.ConsoleLogger = ConsoleLogger;
 
 var Counter = {
   name: "counter",
@@ -80,11 +80,11 @@ var C_NoDeps_PriorityPlusOne = {
   }
 };
 
-describe("exapp", function() {
+describe("xpart", function() {
   it("should test parseArguments()", function() {
     function check(argv, map) {
-      assert.deepEqual(exapp.parseArguments(argv, 0), map);
-      assert.deepEqual(exapp.parseArguments(["node", "app.js"].concat(argv)), map);
+      assert.deepEqual(xpart.parseArguments(argv, 0), map);
+      assert.deepEqual(xpart.parseArguments(["node", "app.js"].concat(argv)), map);
     }
 
     check([                             ], {                                 });
@@ -122,7 +122,7 @@ describe("exapp", function() {
   });
 
   it("should test application's properties", function(done) {
-    var app = exapp({
+    var app = xpart.app({
       args: {},
       config: {},
       logger: ConsoleLogger
@@ -162,14 +162,14 @@ describe("exapp", function() {
 
     // State is a read-only property.
     assert.throws(function() {
-      app.setProperty("state", exapp.kRunning);
+      app.setProperty("state", xpart.kRunning);
     });
 
     done();
   });
 
   it("should resolve dependencies of 'a' and 'b'", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["a", "b"], function(err) {
         assert.ifError(err);
@@ -180,7 +180,7 @@ describe("exapp", function() {
   });
 
   it("should resolve dependencies of 'b' and 'a'", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, B_DepsOnA, A_NoDeps])
       .start(["b", "a"], function(err) {
         assert.ifError(err);
@@ -191,7 +191,7 @@ describe("exapp", function() {
   });
 
   it("should initialize only 'a'", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["a"], function(err) {
         assert.ifError(err);
@@ -202,7 +202,7 @@ describe("exapp", function() {
   });
 
   it("should initialize only 'b'", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["b"], function(err) {
         assert.ifError(err);
@@ -213,7 +213,7 @@ describe("exapp", function() {
   });
 
   it("should initialize all '*'", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -224,7 +224,7 @@ describe("exapp", function() {
   });
 
   it("should initialize only 'b' (with 'a' as a dependency)", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_DepsOnA])
       .start(["b"], function(err) {
         assert.ifError(err);
@@ -235,7 +235,7 @@ describe("exapp", function() {
   });
 
   it("should fail to initialize modules depending on each other", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_DepsOnB, B_DepsOnA])
       .start(["*"], function(err) {
         assert(err);
@@ -246,7 +246,7 @@ describe("exapp", function() {
   });
 
   it("should fail to initialize modules having unknown dependency", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([A_NoDeps, B_NoDeps])
       .start(["*"], function(err) {
         assert(err);
@@ -258,7 +258,7 @@ describe("exapp", function() {
 
 
   it("should fail to initialize an unknown module", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, B_NoDeps])
       .start(["unknown"], function(err) {
         assert(err);
@@ -269,7 +269,7 @@ describe("exapp", function() {
   });
 
   it("should resolve correct order if module has a priority (-1)", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, C_NoDeps_PriorityMinusOne])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -280,7 +280,7 @@ describe("exapp", function() {
   });
 
   it("should resolve correct order if module has a priority (+1)", function(done) {
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, A_NoDeps, C_NoDeps_PriorityPlusOne])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -299,7 +299,7 @@ describe("exapp", function() {
       }
     };
 
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Throw])
       .start(["throw"], function(err) {
         assert(err);
@@ -335,7 +335,7 @@ describe("exapp", function() {
       }
     };
 
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Counter, CustomA, CustomB])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -379,7 +379,7 @@ describe("exapp", function() {
       }
     };
 
-    var app = exapp({
+    var app = xpart.app({
       logger: ConsoleLogger,
       modules: [CustomA, CustomB]
     });
@@ -431,7 +431,7 @@ describe("exapp", function() {
       }
     };
 
-    var app = exapp({
+    var app = xpart.app({
       logger: ConsoleLogger,
       modules: [CustomA, CustomB],
       stopOnFail: true
@@ -470,7 +470,7 @@ describe("exapp", function() {
       }
     };
 
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([Module])
       .start(["*"], function(err) {
         assert.ifError(err);
@@ -485,7 +485,7 @@ describe("exapp", function() {
       });
   });
 
-  it("should test exapp.modularize()", function(done) {
+  it("should test xpart.modularize()", function(done) {
     function ModuleA(app, config) {
       this.app = app;
       this.config = config;
@@ -522,10 +522,10 @@ describe("exapp", function() {
     };
     ModuleB.deps = ["a"];
 
-    var app = exapp({ logger: ConsoleLogger })
+    var app = xpart.app({ logger: ConsoleLogger })
       .register([
-        exapp.modularize({ module: ModuleA, name: "a" }),
-        exapp.modularize({ module: ModuleB, name: "b" })
+        xpart.modularize({ module: ModuleA, name: "a" }),
+        xpart.modularize({ module: ModuleB, name: "b" })
       ])
       .start(["*"], function(err) {
         assert.ifError(err);

@@ -1,8 +1,9 @@
 {
-  "name": "exapp",
-  "version": "1.4.0",
+  "name": "xpart",
+  "version": "1.0.0",
+  "license": "Unlicense",
 
-  "description": "Universal and modular application framework with dependency management.",
+  "description": "An extensible framework for building modular applications and parts with dependency management.",
   "keywords": [
     "app",
     "application",
@@ -11,23 +12,21 @@
     "injection",
     "management",
     "modular",
-    "module"
+    "module",
+    "parts",
+    "xpart"
   ],
 
-  "homepage": "https://github.com/exjs/exapp",
+  "homepage": "https://github.com/exjs/xpart",
   "bugs": {
-    "url": "https://github.com/exjs/exapp/issues"
+    "url": "https://github.com/exjs/xpart/issues"
   },
 
-  "contributors": [{
-    "name": "Petr Kobalicek",
-    "email": "kobalicek.petr@gmail.com",
-    "url": "http://kobalicek.com"
-  }],
+  "contributors": [
+    "Petr Kobalicek <kobalicek.petr@gmail.com> (kobalicek.com)"
+  ],
 
-  "license": "Unlicense",
-
-  "main": "exapp.js",
+  "main": "xpart.js",
 
   "devDependencies": {
     "mocha": "*"
@@ -35,10 +34,10 @@
 
   "repository" : {
     "type": "git",
-    "url": "https://github.com/exjs/exapp.git"
+    "url": "https://github.com/exjs/xpart.git"
   },
 
   "scripts": {
-    "test": "mocha exapp-spec.js"
+    "test": "mocha xpart-spec.js"
   }
 }
