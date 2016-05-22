@@ -2,7 +2,8 @@ XPart
 =====
 
   * [Official Repository (exjs/xpart)](https://github.com/exjs/xpart)
-  * [Public Domain (unlicense.org)](http://unlicense.org)
+  * [Official Chat (gitter)](https://gitter.im/exjs/exjs)
+  * [Public Domain (https://unlicense.org)](https://unlicense.org)
 
 XPart is an extensible application framework for node.js that has zero dependencies. It can be used to develop applications composing of multiple modules with a possibility to specify which modules to use. The framework itself defines a minimal interface that can be used to define modules, their dependencies, and a way how to start and stop them. It contains an interface for logging, module management, and application's lifetime management. Everything else has to be provided by XPart consumers.
 

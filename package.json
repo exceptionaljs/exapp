@@ -28,9 +28,8 @@
 
   "main": "xpart.js",
 
-  "devDependencies": {
-    "mocha": "*"
-  },
+  "engines": { "node": ">=4" },
+  "devDependencies": { "mocha": "*" },
 
   "repository" : {
     "type": "git",
