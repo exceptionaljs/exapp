@@ -2,6 +2,7 @@
   "name": "xpart",
   "version": "1.0.0",
   "license": "Unlicense",
+  "engines": { "node": ">=4" },
 
   "description": "An extensible framework for building modular applications and parts with dependency management.",
   "keywords": [
@@ -27,9 +28,6 @@
   ],
 
   "main": "xpart.js",
-
-  "engines": { "node": ">=4" },
-  "devDependencies": { "mocha": "*" },
 
   "repository" : {
     "type": "git",

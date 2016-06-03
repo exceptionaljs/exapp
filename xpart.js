@@ -358,7 +358,7 @@ function modularize(opt) {
       config = app.config[optCfg];
     }
 
-    // If no configuration has been provided we default to an empty object.
+    // If no configuration has been provided we default to empty object.
     if (config == null)
       config = {};
 
@@ -628,7 +628,7 @@ class App {
    * available to be instantiated. Modules to be run are passed in `App.start()`.
    *
    * @param {object, object[]) m Module or modules (array) to register.
-   * @param {string=} path Optional path of the module (for debugging purposes).
+   * @param {string} [path] Optional path of the module (for debugging purposes).
    * @return {this}
    */
   register(m, path) {
