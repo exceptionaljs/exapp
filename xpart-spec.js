@@ -1,4 +1,4 @@
-// xpart.js <https://github.com/exjs/xpart>
+// xpart.js <https://github.com/jsstuff/xpart>
 "use strict";
 
 var assert = require("assert");

@@ -1,4 +1,4 @@
-// xpart.js <https://github.com/exjs/xpart>
+// xpart.js <https://github.com/jsstuff/xpart>
 (function($export, $as) {
 "use strict";
 
@@ -1074,4 +1074,5 @@ App.prototype.error = makeLogFunc("error");
  */
 xpart.app = function app(opt) { return new App(opt); };
 
-}).apply(this, typeof module === "object" ? [module, "exports"] : [this, "xpart"]);
+}).apply(this, typeof module === "object" && module && module.exports
+  ? [module, "exports"] : [this, "xpart"]);

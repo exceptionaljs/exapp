@@ -2,7 +2,7 @@
   "name": "xpart",
   "version": "1.0.0",
   "license": "Unlicense",
-  "engines": { "node": ">=4" },
+  "engines": { "node": ">=8" },
 
   "description": "An extensible framework for building modular applications and parts with dependency management.",
   "keywords": [
@@ -18,9 +18,9 @@
     "xpart"
   ],
 
-  "homepage": "https://github.com/exjs/xpart",
+  "homepage": "https://github.com/jsstuff/xpart",
   "bugs": {
-    "url": "https://github.com/exjs/xpart/issues"
+    "url": "https://github.com/jsstuff/xpart/issues"
   },
 
   "contributors": [
@@ -31,7 +31,7 @@
 
   "repository" : {
     "type": "git",
-    "url": "https://github.com/exjs/xpart.git"
+    "url": "https://github.com/jsstuff/xpart.git"
   },
 
   "scripts": {

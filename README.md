@@ -1,8 +1,7 @@
 XPart
 =====
 
-  * [Official Repository (exjs/xpart)](https://github.com/exjs/xpart)
-  * [Official Chat (gitter)](https://gitter.im/exjs/exjs)
+  * [Official Repository (jsstuff/xpart)](https://github.com/jsstuff/xpart)
   * [Public Domain (https://unlicense.org)](https://unlicense.org)
 
 XPart is an extensible application framework for node.js that has zero dependencies. It can be used to develop applications composing of multiple modules with a possibility to specify which modules to use. The framework itself defines a minimal interface that can be used to define modules, their dependencies, and a way how to start and stop them. It contains an interface for logging, module management, and application's lifetime management. Everything else has to be provided by XPart consumers.
@@ -311,15 +310,15 @@ Here is a following example that uses `modularize` (two files):
 // FILE: module.js
 // ---------------------------------------------------------------------------
 
-// Use `exclass` to create a JS class.
-var exclass = require("exclass");
+// Use `xmo` to create a JS class.
+var xmo = require("xmo");
 
 // A module class - object oriented way of creating your own modules. The
 // framework doesn't dictate how to do such class, the only important thing
 // to do is to backlink the `app` object in the module itself, so the module
 // can access the `app` at any time.
-var Module = exclass({
-  $construct: function(app, config) {
+var Module = xmo({
+  constructor: function(app, config) {
     // Backlink the `app` within the module.
     this.app = app;
 
